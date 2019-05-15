@@ -118,11 +118,22 @@ https://qiita.com/HeRo/items/4e65dcc82783b2766c03#%E3%83%87%E3%82%A3%E3%83%AC%E3
 
 これがあれば `clasp pull` が動作します。 これを行う事でデータを取得できます。たぶん `git pull` のパクリです。 +
 
-最新の情報に更新したい際はこちらを使うとよいでしょう。
+最新の情報に更新したい際はこちらを使うとよいでしょう。 +
+
+DockerComposeを通じてコマンドを使うのでしたら、以下のように打ちます。
+
+```
+docker-compose run app clasp pull
+```
 
 ## GASデータをGASにPushする。
 
 上記の `clasp clone hogehogehoge....` を行っていれば `repository/.clasp.json` が出来ていると思います。 +
 
-これがあれば `clasp push` が動作します。 GAS本番にPushされるものと思ってください。
+これがあれば `clasp push` が動作します。 GAS本番にPushされるものと思ってください。 +
 
+DockerComposeを通じてコマンドを使うのでしたら、以下のように打ちます。
+
+```
+docker-compose run app clasp push
+```
