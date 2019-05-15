@@ -1,0 +1,128 @@
+# はじめに
+
+こちらは `Google Apps Script` に使用する `clasp` を簡単に使用するためのDockerfileが入ったリポジトリになります。
+
+## 事前準備
+
+1. `example.env` をコピーし `.env` を作成してください。
+
+1. 以下のURLの `GAS APIをONに、claspでログインする` を実施しておいてください。
+
+https://qiita.com/rf_p/items/7492375ddd684ba734f8#4-gas-api%E3%82%92on%E3%81%ABclasp%E3%81%A7%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%81%99%E3%82%8B +
+
+### .envについて
+
+`.env` では以下のような設定を行っています。 `=` の右側を変更することでversionを指定することが出来ます。必要なければ変更をしないでよいでしょう。
+
+```
+# NodeJSのバージョン
+nodejs_version=10.15.3
+# モジュール [clasp] のバージョン
+clasp_version=2.1.0
+# モジュール[typescript]のバージョン
+typescript_version=3.4.5
+```
+
+## ログイン情報が記載されたJSONを手に入れる
+
+`docker-compose.yml` のある場所をカレントディレクトリにして以下のなが～い対応をします。 +
+
+この操作を行う事でログイン処理が簡単になります。ログインに関連する情報なのでgithubで共有すべきものではありません。
+最終的に `.clasprc.json` というものを取得し、これをコンテナに共有するように使用します。 +
+もし、 `.clasprc.json` が手元にあるのならば、この操作は必要ありません。リポジトリの `root` ディレクトリに入れておいてください。 + 
+`root` は `.gitignore` されているので共有されません。
+
+```
+docker-compose build
+docker-compose up -d
+# または
+docker-compose up -d --build
+```
+
+エラーを吐いた場合、前述の `事前準備` が整っていない可能性があります。 + 
+実行すると以下のようなLogが出てきてターミナルが返ってきます。
+
+```
+PS C:\Users\RyoAnzai\Desktop\git\docker_clasp> docker-compose up -d
+Creating network "dockerclasp_default" with the default driver
+Creating dockerclasp_app_1 ... done
+```
+
+さて、次にコンテナの中に侵入します。
+
+```
+docker-compose exec app bash
+```
+
+そうするとbashが開きますので以下のコマンドを打ちます。
+
+```
+clasp login --no-localhost
+```
+
+そうするとログに以下のように表示されます。最後のURLをホストOSのWebブラウザで開いてください。 +
+
+(ちなみにuserネームのroot@以下の数字は起動するたびに変化します。再現できてなくても問題なし。)
+
+```
+root@6859b415abe0:/var/repositories# clasp login --no-localhost
+Logging in globally...
+� Authorize clasp by visiting this url:
+https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fscript.deployments%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fscript.p.....(もっとたくさんの文字列)
+
+Enter the code from that page here:
+```
+
+Webブラウザで開くとGoogleアカウントの認証が出ますのでポチポチ押していきましょう。 + 
+最後にコードが表示されますので、それをコピーして、ターミナルに入力してください。
+
+```
+Authorization successful.
+
+Default credentials saved to: ~/.clasprc.json (/root/.clasprc.json).
+```
+
+上記のように `/root/.clasprc.json` に目標の `.clasprc.json` が出来上がります。 `.clasprc.json` はログインの情報を記録しておくものですので、以降はログインの処理は不要になります。トークンの時間制限などで使用できなくなる可能性もありますが。 +
+
+一応Dockerをお片付けしましょう。
+
+```
+docker-compose down
+```
+
+## GASデータを取得する。
+
+`docker-compose.yml` のある場所をカレントディレクトリにして以下のコマンドを打ちます。 +
+
+以下のコマンドで `repogitory` フォルダ内に取得することが出来ます。 +
+
+GASのスクリプトIDはGASのスクリプトのページで、ファイル→プロジェクトのプロパティ→情報タブ→スクリプトIDです。
+
+```
+docker-compose run app clasp clone (スクリプトID)
+```
+
+`repository` ディレクトリにデータがじゃらじゃら出てきたと思います。 +
+
+ファイルわけがされてないと思うのでしたら、以下のURLを参考にしてください。 +
+
+https://qiita.com/HeRo/items/4e65dcc82783b2766c03#%E3%83%87%E3%82%A3%E3%83%AC%E3%82%AF%E3%83%88%E3%83%AA%E6%A7%8B%E6%88%90
+
+## データを落とすことでGitやGithubで管理できます。
+
+`repository` ディレクトリにGASのプログラムデータが手に入りましたのでバージョン管理ソフトなどで管理してあげてください。
+
+## GASデータを更新する(clasp pull)。
+
+上記の `clasp clone hogehogehoge....` を行っていれば `repository/.clasp.json` が出来ていると思います。 +
+
+これがあれば `clasp pull` が動作します。 これを行う事でデータを取得できます。たぶん `git pull` のパクリです。 +
+
+最新の情報に更新したい際はこちらを使うとよいでしょう。
+
+## GASデータをGASにPushする。
+
+上記の `clasp clone hogehogehoge....` を行っていれば `repository/.clasp.json` が出来ていると思います。 +
+
+これがあれば `clasp push` が動作します。 GAS本番にPushされるものと思ってください。
+
